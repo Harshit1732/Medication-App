@@ -1,7 +1,7 @@
-import JWT  from "jsonwebtoken"
-import dotenv from "dotenv"; 
+const JWT  = require("jsonwebtoken")
+const dotenv = require ("dotenv"); 
 dotenv.config()
-const auth = (req,res,next) =>{
+export const  auth = (req,res,next) =>{
     const token = req.headers?.authorization?.split(" ")[1];
     if(token){
         console.log(token)
@@ -20,4 +20,4 @@ const auth = (req,res,next) =>{
         res.status(400).send({"message" : "User Not Found, Try Logging In"})
     }
 }
-export default auth
+
