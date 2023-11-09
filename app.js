@@ -7,9 +7,10 @@ import bcrypt from "bcrypt"
 import jwt  from "jsonwebtoken"
 import auth from "./Middleware/authMiddleware.js"
 dotenv.config();
-
+const app=express()
 // rest api
-const app = express();
+app.use(express.json());
+
 //Cors config
 app.use(
   cors({
@@ -25,39 +26,36 @@ app.get("/", (req, res) => {
 
 
 // User Authentication
-app.post("/signup",async(req,res)=>{
-  try{
-  let data=await UserModel.find({email:req.body.email});
-  console.log(data,"data from signup")
-  if(data.length>0){
-     res.status(200).send({msg:"User Already Exist"})
+app.post("/signup", async (req, res) => {
+  try {
+    let data = await UserModel.find({ email: req.body.email });
+    console.log(data, "data from signup");
+
+    if (data.length > 0) {
+      res.status(200).send({ msg: "User Already Exists" });
+    } else {
+      bcrypt.hash(req.body.password, 4, async (err, hash) => {
+        if (err) {
+          res.status(500).send({ msg: "SOMETHING WENT WRONG!" });
+        }
+        req.body.password = hash;
+        req.body.administration = false;
+        await UserModel.create(req.body);
+        res.status(200).send({ msg: "User registered Successfully" });
+      });
+    }
+  } catch (err) {
+    console.log(err.message);
+    res.status(404).send({ msg: "Failed to create a new user" });
   }
-  else{
-     bcrypt.hash(req.body.password,4,async (err,hash)=>{
-         if (err){
-             res.status(500).send({msg:"SOMETHING WENT WRONG!"})
-         }
-         req.body.password = hash;
-         req.body.administration=false;
-         await UserModel.create(req.body);
-         res.status(200).send({ msg: "User registered Successfully" });
-     })
-  }
-  }
-  catch(err){
-    console.log(err.message)
-     res.status(404).send({ msg: "Failed to create new user" });
-  }
- })
- 
- 
+});
  
  
  
  
  app.post("/login", async (req, res) => {
      try {
-       let data = await UserModel.find({ email: req.body.email });
+       let data = await UserModel.find({ email:req.body.email });
        if (data.length <= 0) {
          res.status(200).send({ msg: "User not found" });
        } else {
