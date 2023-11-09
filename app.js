@@ -28,7 +28,7 @@ app.use('/user', router);
 
 
 //connect database
-app.listen(process.env.PORT,async()=>{
+app.listen(process.env.POR,async()=>{
   try{
     await connectDB()
     console.log(`Database connected and listening to http://localhost:${process.env.PORT}`)
@@ -37,5 +37,4 @@ app.listen(process.env.PORT,async()=>{
     console.log(err)
     console.log("App is not listening")
   }
-})
-
+}) 
