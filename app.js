@@ -10,6 +10,7 @@ dotenv.config();
 
 // rest api
 const app = express();
+app.use(express.json());
 //Cors config
 app.use(
   cors({
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 // User Authentication
 app.post("/signup",async(req,res)=>{
   try{
+    console.log(req.body.name);
   let data=await UserModel.find({email:req.body.email});
   console.log(data,"data from signup")
   if(data.length>0){
