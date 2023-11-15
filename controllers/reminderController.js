@@ -29,8 +29,6 @@ const validateCreateReminderData = (data) => {
     if (!phone || typeof phone !== 'string') {
         errors.push('Dosage is required and must be a string.');
       }
-    
-    
   
     return errors;
   };
@@ -63,7 +61,7 @@ const validateCreateReminderData = (data) => {
   
       // Create a new reminder
       const newReminder = new Reminder({
-        userId: req.user.id,
+        // userId: req.user.id,
         medicationName,
         dosage,
         frequency,
@@ -121,8 +119,13 @@ const validateCreateReminderData = (data) => {
   // Function to schedule a reminder
 const scheduleReminder = (reminder) => {
     // Use custom time if set, otherwise default to 5 minutes before the medication time
-    const reminderTime = reminder.customNotificationTime || new Date(reminder.time.getTime() - 5 * 60 * 1000);
-  
+    // console.log("hiiiii")
+    // console.log((new Date(reminder.time.getTime()-5*60*1000)).toISOString)
+  // console.log(new Date(reminder.time).toISOString())
+    const formatedreminder= new Date(reminder.time.getTime()-5*60*1000)
+    
+    const reminderTime = reminder.customNotificationTime || formatedreminder.toISOString();
+    // console.log(reminderTime)
     schedule.scheduleJob(reminderTime, () => {
       // Send reminder notification
       sendReminderNotification(reminder);
@@ -131,19 +134,20 @@ const scheduleReminder = (reminder) => {
   
   // Function to send the reminder notification via email and SMS
   const sendReminderNotification = async (reminder) => {
+     console.log("email sending")
     try {
-      // Create a nodemailer transporter for sending emails
+      
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'your-email@gmail.com', // Replace with your Gmail email address
-          pass: 'your-email-password', // Replace with your Gmail app password
+          user: 'harshitgupta1732000@gmail.com', 
+          pass: 'yadnhcqegkqlblqf', 
         },
       });
   
       // Create the email message
       const mailOptions = {
-        from: 'your-email@gmail.com', // Replace with your Gmail email address
+        from: 'harshitgupta1732000@gmail.com', // Replace with your Gmail email address
         to: reminder.email,
         subject: 'Medication Reminder',
         text: `It's time to take your medication (${reminder.medicationName}).`,
@@ -153,12 +157,12 @@ const scheduleReminder = (reminder) => {
       await transporter.sendMail(mailOptions);
   
       // Use Twilio to send SMS
-      const twilioClient = new twilio.Twilio('your-twilio-account-sid', 'your-twilio-auth-token');
+      const twilioClient = new twilio.Twilio('ACd8c17d9345d9e26720e3ce7ea7597a52', '04f5b3d8f6528aec843e575e03cf3ae8');
       const smsMessage = `It's time to take your medication (${reminder.medicationName}).`;
       await twilioClient.messages.create({
         body: smsMessage,
         to: reminder.phone,
-        from: 'your-twilio-phone-number', // Replace with your Twilio phone number
+        from: '+12512548801', // Replace with your Twilio phone number
       });
   
       console.log(`Reminder sent to ${reminder.email} and ${reminder.phone}`);
@@ -172,7 +176,4 @@ const scheduleReminder = (reminder) => {
     updateReminder,
   };
 
-  module.exports = {
-    createReminder,
-    updateReminder,
-  };
+  
