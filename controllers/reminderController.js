@@ -4,52 +4,52 @@ const twilio = require("twilio");
 const Reminder = require("../models/Reminder");
 
 // Validate input data for creating a new reminder
+
 const validateCreateReminderData = (data) => {
   const { medicationName, dosage, frequency, time, email, phone } = data;
   const errors = [];
-
   if (!medicationName || typeof medicationName !== "string") {
     errors.push("Medication name is required and must be a string.");
   }
-
   if (!dosage || typeof dosage !== "string") {
     errors.push("Dosage is required and must be a string.");
   }
   if (!frequency || typeof frequency !== "string") {
     errors.push("Medication name is required and must be a string.");
   }
-
   if (!email || typeof email !== "string") {
     errors.push("Dosage is required and must be a string.");
   }
-  // if (!time || typeof time !== "string") {
-  //   errors.push("Medication name is required and must be a string.");
-  // }
-
   if (!phone || typeof phone !== "string") {
     errors.push("Dosage is required and must be a string.");
   }
-
   return errors;
 };
 
 // Validate input data for updating a reminder
-const validateUpdateReminderData = (data) => {
-  const { reminderId, customNotificationTime } = data;
-  const errors = [];
 
+const validateUpdateReminderData = (data) => {
+  const { reminderId, customTime } = data;
+  const errors = [];
   if (!reminderId || typeof reminderId !== "string") {
     errors.push("Reminder ID is required and must be a string.");
   }
-
   return errors;
 };
 
 // Create a new medication reminder
 const createReminder = async (req, res) => {
   try {
-    const {medicationName, dosage, frequency, time, email, phone,frequencyType } = req.body;
-    
+    const {
+      medicationName,
+      dosage,
+      frequency,
+      time,
+      email,
+      phone,
+      frequencyType,
+    } = req.body;
+
     const validationErrors = validateCreateReminderData(req.body);
 
     if (validationErrors.length > 0) {
@@ -58,7 +58,7 @@ const createReminder = async (req, res) => {
 
     // Create a new reminder
     const newReminder = new Reminder({
-      // userId: req.user._id,
+      userId: req.user._id,
       medicationName,
       dosage,
       frequency,
@@ -69,10 +69,7 @@ const createReminder = async (req, res) => {
     });
 
     await newReminder.save();
-
-    // Schedule the reminder at the specified time
     await fetchingReminders();
-
     res
       .status(201)
       .json({ message: "Medication reminder created successfully" });
@@ -83,32 +80,25 @@ const createReminder = async (req, res) => {
 };
 
 // Update a medication reminder's custom notification time
+
 const updateReminder = async (req, res) => {
   try {
     const { reminderId, customTime } = req.body;
-
-    // Validate input data
-    const validationErrors = validateUpdateReminderData(req.body);
-
+    const validationErrors = validateUpdateReminderData(req.body); //validating the input data
     if (validationErrors.length > 0) {
       return res.status(400).json({ errors: validationErrors });
     }
-
-    // Find the reminder by ID
-    const reminder = await Reminder.findById(reminderId);
+    const reminder = await Reminder.findById(reminderId); // Find the reminder by ID
 
     if (!reminder) {
       return res.status(404).json({ message: "Reminder not found" });
     }
 
-    // Update the reminder's custom notification time
-    reminder.time= customTime;
-    // reminder.customNotificationTime = customNotificationTime;
-
+    reminder.time = customTime; // Update the reminder's custom notification time
     await reminder.save();
 
     // Reschedule the reminder with the updated custom time
-    scheduleReminder(reminder);
+    // scheduleReminder(reminder);
 
     res.status(200).json({ message: "Reminder updated successfully" });
   } catch (error) {
@@ -117,50 +107,40 @@ const updateReminder = async (req, res) => {
   }
 };
 
-
-const fetchingReminders= async()=>{
-
-  try{
-  const reminders=  await Reminder.find()
-  console.log(reminders)
-  reminders.forEach(reminder=>{
-    scheduleReminder(reminder)
-  })
-  schedule.scheduleJob('0 0 * * *', () => {
-    // Schedule the daily reminders
-    fetchingReminders();
-  });
-}catch(error){
-  console.log("error while fetching reminders")
-}
-
-}
-
-
-
-
+const fetchingReminders = async () => {
+  try {
+    const reminders = await Reminder.find();
+    console.log(reminders);
+    reminders.forEach((reminder) => {
+      scheduleReminder(reminder);
+    });
+    schedule.scheduleJob("0 0 * * *", () => {
+      // Schedule the daily reminders "0 0 * * *" it will schedule a reminder for every day at midnight
+      fetchingReminders();
+    });
+  } catch (error) {
+    console.log("error while fetching reminders");
+  }
+};
 
 const scheduleReminder = (reminder) => {
-
-
-  if (reminder.frequencyType=== "EveryDay" && Array.isArray(reminder.time)) {
-    reminder.time.forEach(time => {
-      const timeComponents = time.split(":"); 
+  if (reminder.frequencyType === "EveryDay" && Array.isArray(reminder.time)) {
+    reminder.time.forEach((time) => {
+      const timeComponents = time.split(":");
       const hours = parseInt(timeComponents[0], 10);
       const minutes = parseInt(timeComponents[1], 10);
 
-      console.log(reminder)
-      const reminderTime = new Date(); 
-      reminderTime.setHours(hours); 
-      reminderTime.setMinutes(minutes - 5); 
+      console.log(reminder);
+      const reminderTime = new Date();
+      reminderTime.setHours(hours);
+      reminderTime.setMinutes(minutes - 5);
 
       schedule.scheduleJob(reminderTime, () => {
-        // Send reminder notification
-        sendReminderNotification(reminder);
+        sendReminderNotification(reminder); // Send reminder notification
       });
     });
   } else if (reminder.frequencyType === "Interval-based") {
-    const intervalHours = 3; // Replace this with your desired interval in hours
+    const intervalHours = 3; // Interval getting from query right now it is hard coded to 3
 
     const timeComponents = reminder.time[0].split(":"); // Split the time string into hours and minutes
     const startHours = parseInt(timeComponents[0], 10);
@@ -172,20 +152,15 @@ const scheduleReminder = (reminder) => {
 
     schedule.scheduleJob(startingTime, () => {
       sendReminderNotification(reminder);
-      schedule.scheduleJob({ start: startingTime, rule: `0 */${intervalHours} * * *` }, () => {
-        sendReminderNotification(reminder);
-      });
+      schedule.scheduleJob(
+        { start: startingTime, rule: `0 */${intervalHours} * * *` }, // send reminder notification in every interval time
+        () => {
+          sendReminderNotification(reminder); // send reminder notification
+        }
+      );
     });
+  }
 };
-
-   schedule.scheduleJob('0 0 * * *', () => {
-  // Schedule the daily reminders
-   scheduleDailyReminders();
-});
-}
-
-
-
 
 // Function to send the reminder notification via email and SMS
 const sendReminderNotification = async (reminder) => {
@@ -201,7 +176,7 @@ const sendReminderNotification = async (reminder) => {
 
     // Create the email message
     const mailOptions = {
-      from: "harshitgupta1732000@gmail.com", // Replace with your Gmail email address
+      from: "harshitgupta1732000@gmail.com",
       to: reminder.email,
       subject: "Medication Reminder",
       text: `It's time to take your medication (${reminder.medicationName}).`,
@@ -219,7 +194,7 @@ const sendReminderNotification = async (reminder) => {
     await twilioClient.messages.create({
       body: smsMessage,
       to: reminder.phone,
-      from: "+12512548801", // Replace with your Twilio phone number
+      from: "+12512548801",
     });
 
     console.log(`Reminder sent to ${reminder.email} and ${reminder.phone}`);
@@ -227,9 +202,6 @@ const sendReminderNotification = async (reminder) => {
     console.error("Error sending reminder:", error);
   }
 };
-
-
-
 
 module.exports = {
   createReminder,

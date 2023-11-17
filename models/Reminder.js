@@ -9,7 +9,6 @@ const reminderSchema = new mongoose.Schema({
   email: String,
   phone:Number,
   time: [String],
-  customNotificationTime: String, 
  
 });
 
