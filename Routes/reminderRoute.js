@@ -10,6 +10,6 @@ const router = express.Router();
 router.post('/createReminder', createReminder);
 
 
-router.put('/updateReminder/:id', updateReminder);
+router.put('/updateReminder', updateReminder);
 
 module.exports= router

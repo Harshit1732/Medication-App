@@ -5,10 +5,11 @@ const reminderSchema = new mongoose.Schema({
   medicationName: String,
   dosage: String,
   frequency: String,
+  frequencyType: String,
   email: String,
   phone:Number,
-  time: Date,
-  customNotificationTime: Number, 
+  time: [String],
+  customNotificationTime: String, 
  
 });
 
