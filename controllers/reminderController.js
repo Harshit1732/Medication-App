@@ -58,7 +58,7 @@ const createReminder = async (req, res) => {
 
     // Create a new reminder
     const newReminder = new Reminder({
-      userId: req.user._id,
+      // userId: req.user._id,
       medicationName,
       dosage,
       frequency,
